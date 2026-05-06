@@ -1,0 +1,83 @@
+package ms_usuarios.controller;
+
+import jakarta.validation.Valid;
+import ms_usuarios.dto.UsuarioDTO;
+import ms_usuarios.model.Usuario;
+import ms_usuarios.service.UsuarioService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/usuarios")
+public class UsuarioController {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(UsuarioController.class);
+
+    @Autowired
+    private UsuarioService usuarioService;
+
+    @GetMapping
+    public ResponseEntity<List<Usuario>> listar() {
+        log.info("GET /api/v1/usuarios");
+        List<Usuario> usuarios = usuarioService.listarTodos();
+        if (usuarios.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(usuarios);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Usuario> buscar(@PathVariable Long id) {
+        log.info("GET /api/v1/usuarios/{}", id);
+        try {
+            return ResponseEntity.ok(usuarioService.buscarPorId(id));
+        } catch (RuntimeException e) {
+            log.error("Error: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping
+    public ResponseEntity<Usuario> crear(
+            @Valid @RequestBody UsuarioDTO dto) {
+        log.info("POST /api/v1/usuarios");
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(usuarioService.crear(dto));
+        } catch (RuntimeException e) {
+            log.error("Error: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Usuario> actualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody UsuarioDTO dto) {
+        log.info("PUT /api/v1/usuarios/{}", id);
+        try {
+            return ResponseEntity.ok(usuarioService.actualizar(id, dto));
+        } catch (RuntimeException e) {
+            log.error("Error: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        log.info("DELETE /api/v1/usuarios/{}", id);
+        try {
+            usuarioService.eliminar(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            log.error("Error: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+}
