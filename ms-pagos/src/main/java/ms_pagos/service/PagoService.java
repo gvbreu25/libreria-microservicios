@@ -20,6 +20,9 @@ public class PagoService {
     @Autowired
     private PagoRepository pagoRepository;
 
+    @Autowired
+    private PedidoClientService pedidoClientService;
+
     public List<Pago> listarTodos() {
         log.info("Listando todos los pagos");
         return pagoRepository.findAll();
@@ -46,6 +49,14 @@ public class PagoService {
 
     public Pago procesar(PagoDTO dto) {
         log.info("Procesando pago para pedido id: {}", dto.getPedidoId());
+
+        // Verificar que el pedido existe
+        boolean pedidoExiste = pedidoClientService.verificarPedido(dto.getPedidoId());
+        if (!pedidoExiste) {
+            log.warn("Pedido no encontrado id: {}", dto.getPedidoId());
+            throw new RuntimeException("El pedido no existe: " + dto.getPedidoId());
+        }
+
         Pago pago = new Pago();
         pago.setPedidoId(dto.getPedidoId());
         pago.setUsuarioId(dto.getUsuarioId());

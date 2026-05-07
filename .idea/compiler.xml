@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="ms-eureka" />
+        <module name="ms-gateway" />
+      </profile>
+      <profile name="Annotation profile for ms-pagos" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.46/lombok-1.18.46.jar" />
+        </processorPath>
+        <module name="ms-usuarios" />
+        <module name="ms-categorias" />
+        <module name="ms-pedidos" />
+        <module name="ms-libros" />
+        <module name="ms-pagos" />
+        <module name="ms-carrito" />
+        <module name="ms-inventario" />
+        <module name="ms-resenas" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="ms-carrito" options="-parameters" />
+      <module name="ms-categorias" options="-parameters" />
+      <module name="ms-eureka" options="-parameters" />
+      <module name="ms-gateway" options="-parameters" />
+      <module name="ms-inventario" options="-parameters" />
+      <module name="ms-libros" options="-parameters" />
+      <module name="ms-pagos" options="-parameters" />
+      <module name="ms-pedidos" options="-parameters" />
+      <module name="ms-resenas" options="-parameters" />
+      <module name="ms-usuarios" options="-parameters" />
+    </option>
+  </component>
+</project>

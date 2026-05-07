@@ -20,6 +20,9 @@ public class PedidoService {
     @Autowired
     private PedidoRepository pedidoRepository;
 
+    @Autowired
+    private InventarioClientService inventarioClientService;
+
     public List<Pedido> listarTodos() {
         log.info("Listando todos los pedidos");
         return pedidoRepository.findAll();
@@ -46,6 +49,17 @@ public class PedidoService {
 
     public Pedido crear(PedidoDTO dto) {
         log.info("Creando pedido para usuario id: {}", dto.getUsuarioId());
+
+        // Verificar stock antes de crear el pedido
+        if (dto.getLibroId() != null && dto.getCantidad() != null) {
+            boolean hayStock = inventarioClientService
+                    .verificarStock(dto.getLibroId(), dto.getCantidad());
+            if (!hayStock) {
+                log.warn("Stock insuficiente para libro id: {}", dto.getLibroId());
+                throw new RuntimeException("Stock insuficiente para completar el pedido");
+            }
+        }
+
         Pedido pedido = new Pedido();
         pedido.setUsuarioId(dto.getUsuarioId());
         pedido.setTotal(dto.getTotal());

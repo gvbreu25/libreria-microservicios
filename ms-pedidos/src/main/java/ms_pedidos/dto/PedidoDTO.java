@@ -18,4 +18,6 @@ public class PedidoDTO {
     private Double total;
 
     private String direccionEnvio;
+    private Long libroId;
+    private Integer cantidad;
 }
