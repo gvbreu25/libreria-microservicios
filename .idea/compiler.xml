@@ -9,7 +9,7 @@
         <module name="ms-eureka" />
         <module name="ms-gateway" />
       </profile>
-      <profile name="Annotation profile for ms-pagos" enabled="true">
+      <profile name="Annotation profile for ms-categorias" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -20,8 +20,8 @@
         <module name="ms-categorias" />
         <module name="ms-pedidos" />
         <module name="ms-libros" />
-        <module name="ms-pagos" />
         <module name="ms-carrito" />
+        <module name="ms-pagos" />
         <module name="ms-inventario" />
         <module name="ms-resenas" />
       </profile>
