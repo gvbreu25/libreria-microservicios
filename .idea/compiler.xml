@@ -9,7 +9,7 @@
         <module name="ms-eureka" />
         <module name="ms-gateway" />
       </profile>
-      <profile name="Annotation profile for ms-categorias" enabled="true">
+      <profile name="Annotation profile for ms-resenas" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -22,8 +22,8 @@
         <module name="ms-libros" />
         <module name="ms-carrito" />
         <module name="ms-pagos" />
-        <module name="ms-inventario" />
         <module name="ms-resenas" />
+        <module name="ms-inventario" />
       </profile>
     </annotationProcessing>
   </component>
