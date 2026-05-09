@@ -1,0 +1,2 @@
+-- Tabla pagos se crea automáticamente con JPA.
+-- Sin datos iniciales requeridos para pagos.

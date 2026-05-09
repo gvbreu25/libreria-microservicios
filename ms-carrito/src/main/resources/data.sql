@@ -1,0 +1,2 @@
+-- Tabla carrito se crea automáticamente con JPA.
+-- Sin datos iniciales requeridos para el carrito.

@@ -1,0 +1,2 @@
+-- Tabla resenas se crea automáticamente con JPA.
+-- Sin datos iniciales requeridos para reseñas.
