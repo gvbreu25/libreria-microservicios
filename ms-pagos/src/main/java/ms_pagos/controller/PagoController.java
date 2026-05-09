@@ -51,24 +51,14 @@ public class PagoController {
     @GetMapping("/{id}")
     public ResponseEntity<Pago> buscar(@PathVariable Long id) {
         log.info("GET /api/v1/pagos/{}", id);
-        try {
-            return ResponseEntity.ok(pagoService.buscarPorId(id));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(pagoService.buscarPorId(id));
     }
 
     @PostMapping
     public ResponseEntity<Pago> procesar(@Valid @RequestBody PagoDTO dto) {
         log.info("POST /api/v1/pagos");
-        try {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(pagoService.procesar(dto));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(pagoService.procesar(dto));
     }
 
     @PatchMapping("/{id}/estado")
@@ -76,23 +66,13 @@ public class PagoController {
             @PathVariable Long id,
             @RequestParam String estado) {
         log.info("PATCH /api/v1/pagos/{}/estado -> {}", id, estado);
-        try {
-            return ResponseEntity.ok(pagoService.actualizarEstado(id, estado));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.ok(pagoService.actualizarEstado(id, estado));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         log.info("DELETE /api/v1/pagos/{}", id);
-        try {
-            pagoService.eliminar(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        pagoService.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }

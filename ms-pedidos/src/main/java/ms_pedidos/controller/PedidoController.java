@@ -43,38 +43,23 @@ public class PedidoController {
     public ResponseEntity<List<Pedido>> listarPorEstado(
             @PathVariable String estado) {
         log.info("GET /api/v1/pedidos/estado/{}", estado);
-        try {
-            List<Pedido> lista = pedidoService.listarPorEstado(
-                    Pedido.EstadoPedido.valueOf(estado.toUpperCase()));
-            if (lista.isEmpty()) return ResponseEntity.noContent().build();
-            return ResponseEntity.ok(lista);
-        } catch (IllegalArgumentException e) {
-            log.error("Estado inválido: {}", estado);
-            return ResponseEntity.badRequest().build();
-        }
+        List<Pedido> lista = pedidoService.listarPorEstado(
+                Pedido.EstadoPedido.valueOf(estado.toUpperCase()));
+        if (lista.isEmpty()) return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(lista);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Pedido> buscar(@PathVariable Long id) {
         log.info("GET /api/v1/pedidos/{}", id);
-        try {
-            return ResponseEntity.ok(pedidoService.buscarPorId(id));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(pedidoService.buscarPorId(id));
     }
 
     @PostMapping
     public ResponseEntity<Pedido> crear(@Valid @RequestBody PedidoDTO dto) {
         log.info("POST /api/v1/pedidos");
-        try {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(pedidoService.crear(dto));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(pedidoService.crear(dto));
     }
 
     @PatchMapping("/{id}/estado")
@@ -82,23 +67,13 @@ public class PedidoController {
             @PathVariable Long id,
             @RequestParam String estado) {
         log.info("PATCH /api/v1/pedidos/{}/estado -> {}", id, estado);
-        try {
-            return ResponseEntity.ok(pedidoService.actualizarEstado(id, estado));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.ok(pedidoService.actualizarEstado(id, estado));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         log.info("DELETE /api/v1/pedidos/{}", id);
-        try {
-            pedidoService.eliminar(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        pedidoService.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }

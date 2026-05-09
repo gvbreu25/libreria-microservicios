@@ -42,25 +42,15 @@ public class ItemCarritoController {
     @GetMapping("/{id}")
     public ResponseEntity<ItemCarrito> buscar(@PathVariable Long id) {
         log.info("GET /api/v1/carrito/{}", id);
-        try {
-            return ResponseEntity.ok(carritoService.buscarPorId(id));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(carritoService.buscarPorId(id));
     }
 
     @PostMapping
     public ResponseEntity<ItemCarrito> agregar(
             @Valid @RequestBody ItemCarritoDTO dto) {
         log.info("POST /api/v1/carrito");
-        try {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(carritoService.agregar(dto));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(carritoService.agregar(dto));
     }
 
     @PutMapping("/{id}")
@@ -68,24 +58,14 @@ public class ItemCarritoController {
             @PathVariable Long id,
             @Valid @RequestBody ItemCarritoDTO dto) {
         log.info("PUT /api/v1/carrito/{}", id);
-        try {
-            return ResponseEntity.ok(carritoService.actualizar(id, dto));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(carritoService.actualizar(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         log.info("DELETE /api/v1/carrito/{}", id);
-        try {
-            carritoService.eliminar(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        carritoService.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/usuario/{usuarioId}/vaciar")

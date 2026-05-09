@@ -49,35 +49,20 @@ public class InventarioController {
     @GetMapping("/{id}")
     public ResponseEntity<Inventario> buscar(@PathVariable Long id) {
         log.info("GET /api/v1/inventario/{}", id);
-        try {
-            return ResponseEntity.ok(inventarioService.buscarPorId(id));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(inventarioService.buscarPorId(id));
     }
 
     @GetMapping("/libro/{libroId}")
     public ResponseEntity<Inventario> buscarPorLibro(@PathVariable Long libroId) {
         log.info("GET /api/v1/inventario/libro/{}", libroId);
-        try {
-            return ResponseEntity.ok(inventarioService.buscarPorLibroId(libroId));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(inventarioService.buscarPorLibroId(libroId));
     }
 
     @PostMapping
     public ResponseEntity<Inventario> crear(@Valid @RequestBody InventarioDTO dto) {
         log.info("POST /api/v1/inventario");
-        try {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(inventarioService.crear(dto));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(inventarioService.crear(dto));
     }
 
     @PutMapping("/{id}")
@@ -85,23 +70,13 @@ public class InventarioController {
             @PathVariable Long id,
             @Valid @RequestBody InventarioDTO dto) {
         log.info("PUT /api/v1/inventario/{}", id);
-        try {
-            return ResponseEntity.ok(inventarioService.actualizar(id, dto));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(inventarioService.actualizar(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         log.info("DELETE /api/v1/inventario/{}", id);
-        try {
-            inventarioService.eliminar(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        inventarioService.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }

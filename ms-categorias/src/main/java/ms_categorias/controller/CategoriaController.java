@@ -41,24 +41,14 @@ public class CategoriaController {
     @GetMapping("/{id}")
     public ResponseEntity<Categoria> buscar(@PathVariable Long id) {
         log.info("GET /api/v1/categorias/{}", id);
-        try {
-            return ResponseEntity.ok(categoriaService.buscarPorId(id));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(categoriaService.buscarPorId(id));
     }
 
     @PostMapping
     public ResponseEntity<Categoria> crear(@Valid @RequestBody CategoriaDTO dto) {
         log.info("POST /api/v1/categorias");
-        try {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(categoriaService.crear(dto));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(categoriaService.crear(dto));
     }
 
     @PutMapping("/{id}")
@@ -66,23 +56,13 @@ public class CategoriaController {
             @PathVariable Long id,
             @Valid @RequestBody CategoriaDTO dto) {
         log.info("PUT /api/v1/categorias/{}", id);
-        try {
-            return ResponseEntity.ok(categoriaService.actualizar(id, dto));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(categoriaService.actualizar(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         log.info("DELETE /api/v1/categorias/{}", id);
-        try {
-            categoriaService.eliminar(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        categoriaService.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }

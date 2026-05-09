@@ -51,24 +51,14 @@ public class ResenaController {
     @GetMapping("/{id}")
     public ResponseEntity<Resena> buscar(@PathVariable Long id) {
         log.info("GET /api/v1/resenas/{}", id);
-        try {
-            return ResponseEntity.ok(resenaService.buscarPorId(id));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(resenaService.buscarPorId(id));
     }
 
     @PostMapping
     public ResponseEntity<Resena> crear(@Valid @RequestBody ResenaDTO dto) {
         log.info("POST /api/v1/resenas");
-        try {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(resenaService.crear(dto));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(resenaService.crear(dto));
     }
 
     @PutMapping("/{id}")
@@ -76,23 +66,13 @@ public class ResenaController {
             @PathVariable Long id,
             @Valid @RequestBody ResenaDTO dto) {
         log.info("PUT /api/v1/resenas/{}", id);
-        try {
-            return ResponseEntity.ok(resenaService.actualizar(id, dto));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(resenaService.actualizar(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         log.info("DELETE /api/v1/resenas/{}", id);
-        try {
-            resenaService.eliminar(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        resenaService.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }

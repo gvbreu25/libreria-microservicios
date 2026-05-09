@@ -35,25 +35,15 @@ public class UsuarioController {
     @GetMapping("/{id}")
     public ResponseEntity<Usuario> buscar(@PathVariable Long id) {
         log.info("GET /api/v1/usuarios/{}", id);
-        try {
-            return ResponseEntity.ok(usuarioService.buscarPorId(id));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(usuarioService.buscarPorId(id));
     }
 
     @PostMapping
     public ResponseEntity<Usuario> crear(
             @Valid @RequestBody UsuarioDTO dto) {
         log.info("POST /api/v1/usuarios");
-        try {
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(usuarioService.crear(dto));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(usuarioService.crear(dto));
     }
 
     @PutMapping("/{id}")
@@ -61,23 +51,13 @@ public class UsuarioController {
             @PathVariable Long id,
             @Valid @RequestBody UsuarioDTO dto) {
         log.info("PUT /api/v1/usuarios/{}", id);
-        try {
-            return ResponseEntity.ok(usuarioService.actualizar(id, dto));
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.ok(usuarioService.actualizar(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         log.info("DELETE /api/v1/usuarios/{}", id);
-        try {
-            usuarioService.eliminar(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            log.error("Error: {}", e.getMessage());
-            return ResponseEntity.notFound().build();
-        }
+        usuarioService.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }
