@@ -1,6 +1,8 @@
 package ms_categorias.service;
 
 import ms_categorias.dto.CategoriaDTO;
+import ms_categorias.exception.RecursoNoEncontradoException;
+import ms_categorias.exception.ReglaNegocioException;
 import ms_categorias.model.Categoria;
 import ms_categorias.repository.CategoriaRepository;
 import org.slf4j.Logger;
@@ -35,7 +37,8 @@ public class CategoriaService {
         return categoriaRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Categoria no encontrada con id: {}", id);
-                    return new RuntimeException("Categoria no encontrada con id: " + id);
+                    return new RecursoNoEncontradoException(
+                            "Categoria no encontrada con id: " + id);
                 });
     }
 
@@ -43,7 +46,8 @@ public class CategoriaService {
         log.info("Creando categoria: {}", dto.getNombre());
         if (categoriaRepository.existsByNombre(dto.getNombre())) {
             log.warn("Categoria ya existe: {}", dto.getNombre());
-            throw new RuntimeException("La categoria ya existe: " + dto.getNombre());
+            throw new ReglaNegocioException(
+                    "La categoria ya existe: " + dto.getNombre());
         }
         Categoria categoria = new Categoria();
         categoria.setNombre(dto.getNombre());
@@ -63,8 +67,11 @@ public class CategoriaService {
 
     public void eliminar(Long id) {
         log.info("Eliminando categoria con id: {}", id);
-        Categoria categoria = buscarPorId(id);
-        categoriaRepository.deleteById(categoria.getId());
+        if (!categoriaRepository.existsById(id)) {
+            throw new RecursoNoEncontradoException(
+                    "Categoria no encontrada con id: " + id);
+        }
+        categoriaRepository.deleteById(id);
         log.info("Categoria eliminada con id: {}", id);
     }
 }

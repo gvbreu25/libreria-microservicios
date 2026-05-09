@@ -1,6 +1,8 @@
 package ms_pagos.service;
 
 import ms_pagos.dto.PagoDTO;
+import ms_pagos.exception.RecursoNoEncontradoException;
+import ms_pagos.exception.ReglaNegocioException;
 import ms_pagos.model.Pago;
 import ms_pagos.repository.PagoRepository;
 import org.slf4j.Logger;
@@ -43,18 +45,19 @@ public class PagoService {
         return pagoRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Pago no encontrado con id: {}", id);
-                    return new RuntimeException("Pago no encontrado con id: " + id);
+                    return new RecursoNoEncontradoException(
+                            "Pago no encontrado con id: " + id);
                 });
     }
 
     public Pago procesar(PagoDTO dto) {
         log.info("Procesando pago para pedido id: {}", dto.getPedidoId());
 
-        // Verificar que el pedido existe
         boolean pedidoExiste = pedidoClientService.verificarPedido(dto.getPedidoId());
         if (!pedidoExiste) {
             log.warn("Pedido no encontrado id: {}", dto.getPedidoId());
-            throw new RuntimeException("El pedido no existe: " + dto.getPedidoId());
+            throw new ReglaNegocioException(
+                    "El pedido no existe: " + dto.getPedidoId());
         }
 
         Pago pago = new Pago();
@@ -72,14 +75,23 @@ public class PagoService {
     public Pago actualizarEstado(Long id, String estado) {
         log.info("Actualizando estado del pago id: {} a {}", id, estado);
         Pago pago = buscarPorId(id);
-        pago.setEstado(Pago.EstadoPago.valueOf(estado.toUpperCase()));
+        try {
+            pago.setEstado(Pago.EstadoPago.valueOf(estado.toUpperCase()));
+        } catch (IllegalArgumentException ex) {
+            log.warn("Estado de pago invalido: {}", estado);
+            throw new ReglaNegocioException(
+                    "Estado de pago invalido: " + estado);
+        }
         return pagoRepository.save(pago);
     }
 
     public void eliminar(Long id) {
         log.info("Eliminando pago con id: {}", id);
-        Pago pago = buscarPorId(id);
-        pagoRepository.deleteById(pago.getId());
+        if (!pagoRepository.existsById(id)) {
+            throw new RecursoNoEncontradoException(
+                    "Pago no encontrado con id: " + id);
+        }
+        pagoRepository.deleteById(id);
         log.info("Pago eliminado con id: {}", id);
     }
 }

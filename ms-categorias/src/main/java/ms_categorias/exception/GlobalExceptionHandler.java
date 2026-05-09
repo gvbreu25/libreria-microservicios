@@ -18,22 +18,31 @@ public class GlobalExceptionHandler {
     private static final Logger log =
             LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, Object>> handleRuntimeException(
-            RuntimeException ex) {
-        log.error("RuntimeException: {}", ex.getMessage());
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.BAD_REQUEST.value());
-        error.put("error", "Bad Request");
-        error.put("mensaje", ex.getMessage());
-        return ResponseEntity.badRequest().body(error);
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    public ResponseEntity<Map<String, Object>> handleNotFound(
+            RecursoNoEncontradoException ex) {
+        log.error("Recurso no encontrado: {}", ex.getMessage());
+        return construirRespuesta(HttpStatus.NOT_FOUND, "Recurso no encontrado", ex.getMessage());
+    }
+
+    @ExceptionHandler(ReglaNegocioException.class)
+    public ResponseEntity<Map<String, Object>> handleReglaNegocio(
+            ReglaNegocioException ex) {
+        log.error("Regla de negocio violada: {}", ex.getMessage());
+        return construirRespuesta(HttpStatus.CONFLICT, "Conflicto de negocio", ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(
+            IllegalArgumentException ex) {
+        log.error("Argumento invalido: {}", ex.getMessage());
+        return construirRespuesta(HttpStatus.BAD_REQUEST, "Argumento invalido", ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationException(
             MethodArgumentNotValidException ex) {
-        log.error("ValidationException: {}", ex.getMessage());
+        log.error("Validacion fallida: {}", ex.getMessage());
         Map<String, Object> error = new HashMap<>();
         Map<String, String> campos = new HashMap<>();
         for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
@@ -47,14 +56,19 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleException(
-            Exception ex) {
-        log.error("Exception: {}", ex.getMessage());
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        error.put("error", "Error interno del servidor");
-        error.put("mensaje", ex.getMessage());
-        return ResponseEntity.internalServerError().body(error);
+    public ResponseEntity<Map<String, Object>> handleException(Exception ex) {
+        log.error("Error interno: {}", ex.getMessage(), ex);
+        return construirRespuesta(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Error interno del servidor", ex.getMessage());
+    }
+
+    private ResponseEntity<Map<String, Object>> construirRespuesta(
+            HttpStatus status, String error, String mensaje) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", status.value());
+        body.put("error", error);
+        body.put("mensaje", mensaje);
+        return ResponseEntity.status(status).body(body);
     }
 }

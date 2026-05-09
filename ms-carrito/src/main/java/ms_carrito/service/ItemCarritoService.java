@@ -1,6 +1,7 @@
 package ms_carrito.service;
 
 import ms_carrito.dto.ItemCarritoDTO;
+import ms_carrito.exception.RecursoNoEncontradoException;
 import ms_carrito.model.ItemCarrito;
 import ms_carrito.repository.ItemCarritoRepository;
 import org.slf4j.Logger;
@@ -35,7 +36,8 @@ public class ItemCarritoService {
         return carritoRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Item no encontrado con id: {}", id);
-                    return new RuntimeException("Item no encontrado con id: " + id);
+                    return new RecursoNoEncontradoException(
+                            "Item no encontrado con id: " + id);
                 });
     }
 
@@ -62,8 +64,11 @@ public class ItemCarritoService {
 
     public void eliminar(Long id) {
         log.info("Eliminando item carrito con id: {}", id);
-        ItemCarrito item = buscarPorId(id);
-        carritoRepository.deleteById(item.getId());
+        if (!carritoRepository.existsById(id)) {
+            throw new RecursoNoEncontradoException(
+                    "Item no encontrado con id: " + id);
+        }
+        carritoRepository.deleteById(id);
         log.info("Item eliminado con id: {}", id);
     }
 

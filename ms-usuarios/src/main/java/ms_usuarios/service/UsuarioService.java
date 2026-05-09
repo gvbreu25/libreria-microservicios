@@ -1,6 +1,8 @@
 package ms_usuarios.service;
 
 import ms_usuarios.dto.UsuarioDTO;
+import ms_usuarios.exception.RecursoNoEncontradoException;
+import ms_usuarios.exception.ReglaNegocioException;
 import ms_usuarios.model.Usuario;
 import ms_usuarios.repository.UsuarioRepository;
 import org.slf4j.Logger;
@@ -34,7 +36,7 @@ public class UsuarioService {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Usuario no encontrado con id: {}", id);
-                    return new RuntimeException(
+                    return new RecursoNoEncontradoException(
                             "Usuario no encontrado con id: " + id);
                 });
     }
@@ -43,7 +45,7 @@ public class UsuarioService {
         log.info("Creando usuario con email: {}", dto.getEmail());
         if (usuarioRepository.existsByEmail(dto.getEmail())) {
             log.warn("Email ya registrado: {}", dto.getEmail());
-            throw new RuntimeException(
+            throw new ReglaNegocioException(
                     "El email ya está registrado: " + dto.getEmail());
         }
         Usuario usuario = new Usuario();
@@ -69,8 +71,11 @@ public class UsuarioService {
 
     public void eliminar(Long id) {
         log.info("Eliminando usuario con id: {}", id);
-        Usuario usuario = buscarPorId(id);
-        usuarioRepository.deleteById(usuario.getId());
+        if (!usuarioRepository.existsById(id)) {
+            throw new RecursoNoEncontradoException(
+                    "Usuario no encontrado con id: " + id);
+        }
+        usuarioRepository.deleteById(id);
         log.info("Usuario eliminado con id: {}", id);
     }
 }

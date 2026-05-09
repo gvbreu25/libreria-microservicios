@@ -1,6 +1,8 @@
 package ms_resenas.service;
 
 import ms_resenas.dto.ResenaDTO;
+import ms_resenas.exception.RecursoNoEncontradoException;
+import ms_resenas.exception.ReglaNegocioException;
 import ms_resenas.model.Resena;
 import ms_resenas.repository.ResenaRepository;
 import org.slf4j.Logger;
@@ -40,13 +42,15 @@ public class ResenaService {
         return resenaRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Resena no encontrada con id: {}", id);
-                    return new RuntimeException("Resena no encontrada con id: " + id);
+                    return new RecursoNoEncontradoException(
+                            "Resena no encontrada con id: " + id);
                 });
     }
 
     public Resena crear(ResenaDTO dto) {
         log.info("Creando resena del usuario id: {} para libro id: {}",
                 dto.getUsuarioId(), dto.getLibroId());
+        validarCalificacion(dto.getCalificacion());
         Resena resena = new Resena();
         resena.setUsuarioId(dto.getUsuarioId());
         resena.setLibroId(dto.getLibroId());
@@ -59,6 +63,7 @@ public class ResenaService {
 
     public Resena actualizar(Long id, ResenaDTO dto) {
         log.info("Actualizando resena con id: {}", id);
+        validarCalificacion(dto.getCalificacion());
         Resena resena = buscarPorId(id);
         resena.setCalificacion(dto.getCalificacion());
         resena.setComentario(dto.getComentario());
@@ -67,8 +72,19 @@ public class ResenaService {
 
     public void eliminar(Long id) {
         log.info("Eliminando resena con id: {}", id);
-        Resena resena = buscarPorId(id);
-        resenaRepository.deleteById(resena.getId());
+        if (!resenaRepository.existsById(id)) {
+            throw new RecursoNoEncontradoException(
+                    "Resena no encontrada con id: " + id);
+        }
+        resenaRepository.deleteById(id);
         log.info("Resena eliminada con id: {}", id);
+    }
+
+    private void validarCalificacion(Integer calificacion) {
+        if (calificacion == null || calificacion < 1 || calificacion > 5) {
+            log.warn("Calificacion fuera de rango: {}", calificacion);
+            throw new ReglaNegocioException(
+                    "La calificacion debe estar entre 1 y 5");
+        }
     }
 }

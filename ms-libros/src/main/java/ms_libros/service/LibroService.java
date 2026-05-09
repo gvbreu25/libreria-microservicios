@@ -1,6 +1,8 @@
 package ms_libros.service;
 
 import ms_libros.dto.LibroDTO;
+import ms_libros.exception.RecursoNoEncontradoException;
+import ms_libros.exception.ReglaNegocioException;
 import ms_libros.model.Libro;
 import ms_libros.repository.LibroRepository;
 import org.slf4j.Logger;
@@ -35,7 +37,8 @@ public class LibroService {
         return libroRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Libro no encontrado con id: {}", id);
-                    return new RuntimeException("Libro no encontrado con id: " + id);
+                    return new RecursoNoEncontradoException(
+                            "Libro no encontrado con id: " + id);
                 });
     }
 
@@ -43,7 +46,8 @@ public class LibroService {
         log.info("Creando libro con ISBN: {}", dto.getIsbn());
         if (libroRepository.existsByIsbn(dto.getIsbn())) {
             log.warn("ISBN ya registrado: {}", dto.getIsbn());
-            throw new RuntimeException("El ISBN ya está registrado: " + dto.getIsbn());
+            throw new ReglaNegocioException(
+                    "El ISBN ya está registrado: " + dto.getIsbn());
         }
         Libro libro = new Libro();
         libro.setTitulo(dto.getTitulo());
@@ -71,8 +75,11 @@ public class LibroService {
 
     public void eliminar(Long id) {
         log.info("Eliminando libro con id: {}", id);
-        Libro libro = buscarPorId(id);
-        libroRepository.deleteById(libro.getId());
+        if (!libroRepository.existsById(id)) {
+            throw new RecursoNoEncontradoException(
+                    "Libro no encontrado con id: " + id);
+        }
+        libroRepository.deleteById(id);
         log.info("Libro eliminado con id: {}", id);
     }
 }

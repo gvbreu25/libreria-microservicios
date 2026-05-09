@@ -1,6 +1,8 @@
 package ms_inventario.service;
 
 import ms_inventario.dto.InventarioDTO;
+import ms_inventario.exception.RecursoNoEncontradoException;
+import ms_inventario.exception.ReglaNegocioException;
 import ms_inventario.model.Inventario;
 import ms_inventario.repository.InventarioRepository;
 import org.slf4j.Logger;
@@ -40,7 +42,8 @@ public class InventarioService {
         return inventarioRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Inventario no encontrado con id: {}", id);
-                    return new RuntimeException("Inventario no encontrado con id: " + id);
+                    return new RecursoNoEncontradoException(
+                            "Inventario no encontrado con id: " + id);
                 });
     }
 
@@ -49,7 +52,8 @@ public class InventarioService {
         return inventarioRepository.findByLibroId(libroId)
                 .orElseThrow(() -> {
                     log.error("Inventario no encontrado para libro id: {}", libroId);
-                    return new RuntimeException("Inventario no encontrado para libro id: " + libroId);
+                    return new RecursoNoEncontradoException(
+                            "Inventario no encontrado para libro id: " + libroId);
                 });
     }
 
@@ -57,7 +61,8 @@ public class InventarioService {
         log.info("Creando inventario para libro id: {}", dto.getLibroId());
         if (inventarioRepository.existsByLibroId(dto.getLibroId())) {
             log.warn("Ya existe inventario para libro id: {}", dto.getLibroId());
-            throw new RuntimeException("Ya existe inventario para el libro id: " + dto.getLibroId());
+            throw new ReglaNegocioException(
+                    "Ya existe inventario para el libro id: " + dto.getLibroId());
         }
         Inventario inventario = new Inventario();
         inventario.setLibroId(dto.getLibroId());
@@ -82,8 +87,11 @@ public class InventarioService {
 
     public void eliminar(Long id) {
         log.info("Eliminando inventario con id: {}", id);
-        Inventario inventario = buscarPorId(id);
-        inventarioRepository.deleteById(inventario.getId());
+        if (!inventarioRepository.existsById(id)) {
+            throw new RecursoNoEncontradoException(
+                    "Inventario no encontrado con id: " + id);
+        }
+        inventarioRepository.deleteById(id);
         log.info("Inventario eliminado con id: {}", id);
     }
 }
