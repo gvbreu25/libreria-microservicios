@@ -1,16 +1,20 @@
 # Librería Online - Sistema de Microservicios
 
 ## Descripción
-Sistema de gestión de librería online desarrollado con arquitectura de microservicios usando Spring Boot 3.5.14 y Java 21. Implementa el patrón CSR (Controller-Service-Repository), persistencia real con JPA/Hibernate, validaciones con Bean Validation, manejo centralizado de excepciones y comunicación inter-servicios con WebClient.
+Sistema de gestión de librería online desarrollado con arquitectura de microservicios usando Spring Boot 3.5.14 y Java 21. Implementa el patrón CSR (Controller-Service-Repository), persistencia real con JPA/Hibernate, validaciones con Bean Validation, manejo centralizado de excepciones, comunicación inter-servicios con WebClient y reglas de negocio del dominio.
 
 ## Integrante
 - Gabriel Abreu
+
+## Gestión del proyecto
+- **Trello**: https://trello.com/invite/b/69fd219b8fb7d0e312770224/ATTI4e2acf49a8ee21f88acde43e94428c07A823203B/libreria-online-microservicios
 
 ## Tecnologías
 - Java 21
 - Spring Boot 3.5.14
 - Spring Cloud Netflix Eureka (Service Discovery)
 - Spring Cloud Gateway
+- Spring Cloud LoadBalancer
 - Spring Security + BCrypt
 - Spring Data JPA + Hibernate
 - Spring Validation (Bean Validation JSR 380)
@@ -28,8 +32,8 @@ Sistema de gestión de librería online desarrollado con arquitectura de microse
 | ms-usuarios | 8081 | Gestión de usuarios + autenticación BCrypt |
 | ms-libros | 8082 | Gestión de libros |
 | ms-categorias | 8083 | Gestión de categorías |
-| ms-inventario | 8084 | Control de stock |
-| ms-carrito | 8085 | Carrito de compras |
+| ms-inventario | 8084 | Control de stock (descuento controlado) |
+| ms-carrito | 8085 | Carrito de compras (precios desde ms-libros) |
 | ms-pedidos | 8086 | Gestión de pedidos + detalle (relación JPA OneToMany) |
 | ms-pagos | 8087 | Procesamiento de pagos |
 | ms-resenas | 8088 | Reseñas y calificaciones |
@@ -41,8 +45,11 @@ Sistema de gestión de librería online desarrollado con arquitectura de microse
 - Repositorios `JpaRepository` con métodos derivados (findBy*, existsBy*)
 - DDL automático con `spring.jpa.hibernate.ddl-auto=update`
 - Cada microservicio posee su propia base de datos (database-per-service)
+- Datos iniciales precargados con `data.sql` por microservicio
 
 ### Relación JPA (ms-pedidos)
+La relación `@OneToMany` solo se aplica donde tiene sentido en el mismo bounded context: un Pedido y sus Detalles pertenecen al mismo agregado. Las relaciones entre dominios distintos (Pedido↔Usuario, Pedido↔Libro) no se modelan como FK cruzadas porque cada microservicio mantiene su propia base de datos. Esas relaciones viajan por HTTP a través de WebClient.
+
 - `Pedido` ↔ `DetallePedido` con `@OneToMany` / `@ManyToOne`
 - Cascada `CascadeType.ALL` y `orphanRemoval=true`
 - Foreign Key explícita con `@JoinColumn` y `@ForeignKey`
@@ -59,7 +66,7 @@ Sistema de gestión de librería online desarrollado con arquitectura de microse
 - `GlobalExceptionHandler` con `@RestControllerAdvice` en cada microservicio
 - Códigos HTTP correctos:
   - `404 Not Found` → recurso inexistente
-  - `409 Conflict` → violación de regla de negocio (ej: ISBN duplicado)
+  - `409 Conflict` → violación de regla de negocio
   - `400 Bad Request` → validación fallida o argumento inválido
   - `500 Internal Server Error` → error inesperado
 - Respuesta estructurada con timestamp, status, error y mensaje
@@ -70,15 +77,54 @@ Sistema de gestión de librería online desarrollado con arquitectura de microse
 - Output dual: archivo `.log` por microservicio + JSON para Logstash
 
 ### Comunicación entre microservicios (WebClient)
-- `ms-pedidos → ms-inventario` (verifica stock antes de crear pedido)
-- `ms-carrito → ms-libros` (obtiene precio del libro)
-- `ms-pagos → ms-pedidos` (verifica que el pedido existe)
+| Origen | Destino | Propósito |
+|---|---|---|
+| ms-pedidos | ms-inventario | Verificar stock antes de crear pedido |
+| ms-carrito | ms-libros | Obtener precio real del libro y validar existencia |
+| ms-pagos | ms-pedidos | Obtener estado del pedido para validar el pago |
+| ms-resenas | ms-libros | Verificar que el libro existe antes de reseñarlo |
+
 - WebClient con `@LoadBalanced` (descubrimiento vía Eureka)
-- Timeouts configurados:
-  - Connect timeout: 5s
-  - Response timeout: 5s
-  - Read/Write timeout: 5s
+- Timeouts configurados (connect/response/read/write = 5s)
 - Manejo de errores y respuestas vacías con `onErrorResume`
+
+### Reglas de negocio del dominio
+
+**ms-pedidos**
+- Verificar stock disponible (vía ms-inventario) antes de crear pedido
+- Validar transiciones de estado permitidas:
+  - `PENDIENTE` → `CONFIRMADO`, `CANCELADO`
+  - `CONFIRMADO` → `ENVIADO`, `CANCELADO`
+  - `ENVIADO` → `ENTREGADO`
+  - `ENTREGADO` y `CANCELADO` son estados finales (no admiten cambios)
+- No permitir eliminar pedidos `ENVIADO` o `ENTREGADO`
+
+**ms-pagos**
+- Verificar existencia y estado del pedido antes de procesar pago
+- Rechazar pagos a pedidos en estado `CANCELADO`
+- Impedir doble pago `APROBADO` para el mismo pedido (idempotencia)
+
+**ms-resenas**
+- Validar calificación entre 1 y 5
+- Verificar que el libro exista (vía ms-libros) antes de crear reseña
+- Impedir reseñas duplicadas: un usuario no puede reseñar dos veces el mismo libro
+
+**ms-carrito**
+- Obtener el precio del libro desde ms-libros (no se acepta del request del cliente)
+- Validar existencia del libro antes de agregarlo
+- Si el usuario agrega un libro que ya tiene en el carrito, sumar las cantidades en lugar de duplicar el item
+
+**ms-inventario**
+- Stock no puede ser negativo
+- Endpoint dedicado de descuento valida que la cantidad solicitada no supere el stock disponible
+
+**ms-libros**
+- ISBN único (no se admiten duplicados)
+
+**ms-usuarios**
+- Email único
+- Password almacenado con BCrypt
+- DTO de respuesta separado (no se expone el password al cliente)
 
 ### Patrón CSR
 ```
@@ -154,13 +200,14 @@ config/      → SecurityConfig, WebClientConfig
 - `GET    /api/v1/inventario/libro/{libroId}` - Stock por libro
 - `POST   /api/v1/inventario` - Crear registro
 - `PUT    /api/v1/inventario/{id}` - Actualizar
+- `PATCH  /api/v1/inventario/libro/{libroId}/descontar?cantidad=...` - Descontar stock validando disponibilidad
 - `DELETE /api/v1/inventario/{id}` - Eliminar
 
 ### ms-carrito (8085)
 - `GET    /api/v1/carrito` - Listar
 - `GET    /api/v1/carrito/usuario/{usuarioId}` - Carrito por usuario
-- `POST   /api/v1/carrito` - Agregar item
-- `PUT    /api/v1/carrito/{id}` - Actualizar item
+- `POST   /api/v1/carrito` - Agregar item (precio se obtiene de ms-libros, suma si ya existe)
+- `PUT    /api/v1/carrito/{id}` - Actualizar item (precio refrescado desde ms-libros)
 - `DELETE /api/v1/carrito/{id}` - Quitar item
 - `DELETE /api/v1/carrito/usuario/{usuarioId}/vaciar` - Vaciar carrito
 
@@ -170,8 +217,8 @@ config/      → SecurityConfig, WebClientConfig
 - `GET    /api/v1/pedidos/estado/{estado}` - Pedidos por estado
 - `GET    /api/v1/pedidos/{id}` - Buscar (incluye detalles)
 - `POST   /api/v1/pedidos` - Crear pedido con detalles + verifica stock
-- `PATCH  /api/v1/pedidos/{id}/estado?estado=...` - Cambiar estado
-- `DELETE /api/v1/pedidos/{id}` - Eliminar
+- `PATCH  /api/v1/pedidos/{id}/estado?estado=...` - Cambiar estado (con validación de transición)
+- `DELETE /api/v1/pedidos/{id}` - Eliminar (no permitido si ENVIADO o ENTREGADO)
 
 #### Body de ejemplo POST /api/v1/pedidos
 ```json
@@ -189,7 +236,7 @@ config/      → SecurityConfig, WebClientConfig
 ### ms-pagos (8087)
 - `GET    /api/v1/pagos` - Listar
 - `GET    /api/v1/pagos/pedido/{pedidoId}` - Pagos por pedido
-- `POST   /api/v1/pagos` - Procesar pago (verifica que pedido existe)
+- `POST   /api/v1/pagos` - Procesar pago (valida estado del pedido y doble pago)
 - `PATCH  /api/v1/pagos/{id}/estado?estado=...` - Cambiar estado
 - `DELETE /api/v1/pagos/{id}` - Eliminar
 
@@ -197,6 +244,6 @@ config/      → SecurityConfig, WebClientConfig
 - `GET    /api/v1/resenas` - Listar
 - `GET    /api/v1/resenas/libro/{libroId}` - Reseñas por libro
 - `GET    /api/v1/resenas/usuario/{usuarioId}` - Reseñas por usuario
-- `POST   /api/v1/resenas` - Crear (calificación 1-5)
+- `POST   /api/v1/resenas` - Crear (calificación 1-5, libro debe existir, no duplicada)
 - `PUT    /api/v1/resenas/{id}` - Actualizar
 - `DELETE /api/v1/resenas/{id}` - Eliminar
