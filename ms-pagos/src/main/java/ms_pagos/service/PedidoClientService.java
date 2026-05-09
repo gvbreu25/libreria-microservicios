@@ -20,9 +20,9 @@ public class PedidoClientService {
     @Autowired
     private WebClient.Builder webClientBuilder;
 
-    public boolean verificarPedido(Long pedidoId) {
+    public Map<String, Object> obtenerPedido(Long pedidoId) {
         try {
-            log.info("Verificando pedido id: {}", pedidoId);
+            log.info("Consultando pedido id: {}", pedidoId);
             Map<String, Object> respuesta = webClientBuilder.build()
                     .get()
                     .uri("http://ms-pedidos/api/v1/pedidos/" + pedidoId)
@@ -36,13 +36,24 @@ public class PedidoClientService {
                     .block();
 
             if (respuesta != null) {
-                log.info("Pedido verificado: {}", pedidoId);
-                return true;
+                log.info("Pedido obtenido id: {} estado: {}",
+                        pedidoId, respuesta.get("estado"));
             }
-            return false;
+            return respuesta;
         } catch (Exception e) {
-            log.error("Error al verificar pedido: {}", e.getMessage());
-            return false;
+            log.error("Error al obtener pedido: {}", e.getMessage());
+            return null;
         }
+    }
+
+    public boolean verificarPedido(Long pedidoId) {
+        return obtenerPedido(pedidoId) != null;
+    }
+
+    public String obtenerEstadoPedido(Long pedidoId) {
+        Map<String, Object> pedido = obtenerPedido(pedidoId);
+        if (pedido == null) return null;
+        Object estado = pedido.get("estado");
+        return estado != null ? estado.toString() : null;
     }
 }

@@ -53,11 +53,23 @@ public class PagoService {
     public Pago procesar(PagoDTO dto) {
         log.info("Procesando pago para pedido id: {}", dto.getPedidoId());
 
-        boolean pedidoExiste = pedidoClientService.verificarPedido(dto.getPedidoId());
-        if (!pedidoExiste) {
-            log.warn("Pedido no encontrado id: {}", dto.getPedidoId());
+        String estadoPedido = pedidoClientService.obtenerEstadoPedido(dto.getPedidoId());
+        if (estadoPedido == null) {
+            log.warn("Pedido no encontrado o ms-pedidos no disponible id: {}", dto.getPedidoId());
             throw new ReglaNegocioException(
-                    "El pedido no existe: " + dto.getPedidoId());
+                    "El pedido no existe o ms-pedidos no esta disponible: " + dto.getPedidoId());
+        }
+
+        if ("CANCELADO".equalsIgnoreCase(estadoPedido)) {
+            log.warn("Intento de pago a pedido CANCELADO id: {}", dto.getPedidoId());
+            throw new ReglaNegocioException(
+                    "No se puede procesar pago para un pedido CANCELADO");
+        }
+
+        if (pagoRepository.existsByPedidoIdAndEstado(dto.getPedidoId(), Pago.EstadoPago.APROBADO)) {
+            log.warn("Pedido id: {} ya tiene un pago APROBADO", dto.getPedidoId());
+            throw new ReglaNegocioException(
+                    "El pedido ya tiene un pago aprobado: " + dto.getPedidoId());
         }
 
         Pago pago = new Pago();
