@@ -1,10 +1,13 @@
 package ms_pedidos.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "pedidos")
@@ -36,11 +39,25 @@ public class Pedido {
     @Column(name = "fecha_pedido")
     private LocalDateTime fechaPedido;
 
+    @OneToMany(
+            mappedBy = "pedido",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @JsonManagedReference
+    private List<DetallePedido> detalles = new ArrayList<>();
+
     @PrePersist
     public void prePersist() {
         this.fechaPedido = LocalDateTime.now();
         if (this.activo == null) this.activo = true;
         if (this.estado == null) this.estado = EstadoPedido.PENDIENTE;
+    }
+
+    public void agregarDetalle(DetallePedido detalle) {
+        detalles.add(detalle);
+        detalle.setPedido(this);
     }
 
     public enum EstadoPedido {
