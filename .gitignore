@@ -1,0 +1,28 @@
+# Compiled output
+target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude internal
+.claude/
+
+# Environment
+*.env
+*.local
