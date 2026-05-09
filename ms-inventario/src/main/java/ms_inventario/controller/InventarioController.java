@@ -73,6 +73,15 @@ public class InventarioController {
         return ResponseEntity.ok(inventarioService.actualizar(id, dto));
     }
 
+    @PatchMapping("/libro/{libroId}/descontar")
+    public ResponseEntity<Inventario> descontarStock(
+            @PathVariable Long libroId,
+            @RequestParam Integer cantidad) {
+        log.info("PATCH /api/v1/inventario/libro/{}/descontar?cantidad={}",
+                libroId, cantidad);
+        return ResponseEntity.ok(inventarioService.descontarStock(libroId, cantidad));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         log.info("DELETE /api/v1/inventario/{}", id);

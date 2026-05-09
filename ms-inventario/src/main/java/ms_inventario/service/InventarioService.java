@@ -64,6 +64,10 @@ public class InventarioService {
             throw new ReglaNegocioException(
                     "Ya existe inventario para el libro id: " + dto.getLibroId());
         }
+        if (dto.getCantidad() == null || dto.getCantidad() < 0) {
+            throw new ReglaNegocioException(
+                    "La cantidad de stock no puede ser negativa");
+        }
         Inventario inventario = new Inventario();
         inventario.setLibroId(dto.getLibroId());
         inventario.setCantidad(dto.getCantidad());
@@ -77,12 +81,37 @@ public class InventarioService {
 
     public Inventario actualizar(Long id, InventarioDTO dto) {
         log.info("Actualizando inventario con id: {}", id);
+        if (dto.getCantidad() != null && dto.getCantidad() < 0) {
+            throw new ReglaNegocioException(
+                    "La cantidad de stock no puede ser negativa");
+        }
         Inventario inventario = buscarPorId(id);
         inventario.setCantidad(dto.getCantidad());
         if (dto.getCantidadMinima() != null) {
             inventario.setCantidadMinima(dto.getCantidadMinima());
         }
         return inventarioRepository.save(inventario);
+    }
+
+    public Inventario descontarStock(Long libroId, Integer cantidad) {
+        log.info("Descontando {} unidades del libro id: {}", cantidad, libroId);
+        if (cantidad == null || cantidad <= 0) {
+            throw new ReglaNegocioException(
+                    "La cantidad a descontar debe ser mayor a 0");
+        }
+        Inventario inventario = buscarPorLibroId(libroId);
+        if (inventario.getCantidad() < cantidad) {
+            log.warn("Stock insuficiente libro id: {} (actual: {}, solicitado: {})",
+                    libroId, inventario.getCantidad(), cantidad);
+            throw new ReglaNegocioException(
+                    "Stock insuficiente para el libro id: " + libroId
+                            + " (disponible: " + inventario.getCantidad() + ")");
+        }
+        inventario.setCantidad(inventario.getCantidad() - cantidad);
+        Inventario actualizado = inventarioRepository.save(inventario);
+        log.info("Stock actualizado libro id: {} nueva cantidad: {}",
+                libroId, actualizado.getCantidad());
+        return actualizado;
     }
 
     public void eliminar(Long id) {
