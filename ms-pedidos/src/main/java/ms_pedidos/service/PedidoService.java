@@ -12,7 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -20,6 +24,20 @@ public class PedidoService {
 
     private static final Logger log =
             LoggerFactory.getLogger(PedidoService.class);
+
+    private static final Map<Pedido.EstadoPedido, Set<Pedido.EstadoPedido>> TRANSICIONES_PERMITIDAS =
+            Map.of(
+                    Pedido.EstadoPedido.PENDIENTE,
+                    EnumSet.of(Pedido.EstadoPedido.CONFIRMADO, Pedido.EstadoPedido.CANCELADO),
+                    Pedido.EstadoPedido.CONFIRMADO,
+                    EnumSet.of(Pedido.EstadoPedido.ENVIADO, Pedido.EstadoPedido.CANCELADO),
+                    Pedido.EstadoPedido.ENVIADO,
+                    EnumSet.of(Pedido.EstadoPedido.ENTREGADO),
+                    Pedido.EstadoPedido.ENTREGADO,
+                    EnumSet.noneOf(Pedido.EstadoPedido.class),
+                    Pedido.EstadoPedido.CANCELADO,
+                    EnumSet.noneOf(Pedido.EstadoPedido.class)
+            );
 
     @Autowired
     private PedidoRepository pedidoRepository;
@@ -91,22 +109,42 @@ public class PedidoService {
     public Pedido actualizarEstado(Long id, String estado) {
         log.info("Actualizando estado del pedido id: {} a {}", id, estado);
         Pedido pedido = buscarPorId(id);
+
+        Pedido.EstadoPedido nuevoEstado;
         try {
-            pedido.setEstado(Pedido.EstadoPedido.valueOf(estado.toUpperCase()));
+            nuevoEstado = Pedido.EstadoPedido.valueOf(estado.toUpperCase());
         } catch (IllegalArgumentException ex) {
             log.warn("Estado de pedido invalido: {}", estado);
             throw new ReglaNegocioException(
                     "Estado de pedido invalido: " + estado);
         }
+
+        validarTransicion(pedido.getEstado(), nuevoEstado);
+
+        pedido.setEstado(nuevoEstado);
         return pedidoRepository.save(pedido);
+    }
+
+    private void validarTransicion(Pedido.EstadoPedido actual, Pedido.EstadoPedido nuevo) {
+        Set<Pedido.EstadoPedido> permitidos = TRANSICIONES_PERMITIDAS.get(actual);
+        if (permitidos == null || !permitidos.contains(nuevo)) {
+            log.warn("Transicion invalida: {} -> {}", actual, nuevo);
+            throw new ReglaNegocioException(
+                    "No se puede pasar el pedido de " + actual + " a " + nuevo);
+        }
     }
 
     public void eliminar(Long id) {
         log.info("Eliminando pedido con id: {}", id);
-        if (!pedidoRepository.existsById(id)) {
-            throw new RecursoNoEncontradoException(
-                    "Pedido no encontrado con id: " + id);
+        Pedido pedido = buscarPorId(id);
+
+        if (pedido.getEstado() == Pedido.EstadoPedido.ENVIADO
+                || pedido.getEstado() == Pedido.EstadoPedido.ENTREGADO) {
+            log.warn("No se puede eliminar pedido id: {} en estado {}", id, pedido.getEstado());
+            throw new ReglaNegocioException(
+                    "No se puede eliminar un pedido " + pedido.getEstado());
         }
+
         pedidoRepository.deleteById(id);
         log.info("Pedido eliminado con id: {}", id);
     }
