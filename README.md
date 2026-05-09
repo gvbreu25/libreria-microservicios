@@ -6,6 +6,8 @@ Sistema de gestión de librería online desarrollado con arquitectura de microse
 ## Integrante
 - Gabriel Abreu
 
+> Proyecto desarrollado de forma individual con autorización del docente Fernando Sepúlveda.
+
 ## Gestión del proyecto
 - **Trello**: https://trello.com/invite/b/69fd219b8fb7d0e312770224/ATTI4e2acf49a8ee21f88acde43e94428c07A823203B/libreria-online-microservicios
 
