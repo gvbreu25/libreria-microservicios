@@ -22,6 +22,9 @@ public class ResenaService {
     @Autowired
     private ResenaRepository resenaRepository;
 
+    @Autowired
+    private LibroClientService libroClientService;
+
     public List<Resena> listarTodos() {
         log.info("Listando todas las resenas");
         return resenaRepository.findAll();
@@ -50,7 +53,22 @@ public class ResenaService {
     public Resena crear(ResenaDTO dto) {
         log.info("Creando resena del usuario id: {} para libro id: {}",
                 dto.getUsuarioId(), dto.getLibroId());
+
         validarCalificacion(dto.getCalificacion());
+
+        if (!libroClientService.verificarLibroExiste(dto.getLibroId())) {
+            log.warn("Libro inexistente id: {}", dto.getLibroId());
+            throw new ReglaNegocioException(
+                    "No se puede resenar un libro inexistente: " + dto.getLibroId());
+        }
+
+        if (resenaRepository.existsByUsuarioIdAndLibroId(dto.getUsuarioId(), dto.getLibroId())) {
+            log.warn("El usuario id: {} ya reseno el libro id: {}",
+                    dto.getUsuarioId(), dto.getLibroId());
+            throw new ReglaNegocioException(
+                    "El usuario ya tiene una resena para este libro");
+        }
+
         Resena resena = new Resena();
         resena.setUsuarioId(dto.getUsuarioId());
         resena.setLibroId(dto.getLibroId());
