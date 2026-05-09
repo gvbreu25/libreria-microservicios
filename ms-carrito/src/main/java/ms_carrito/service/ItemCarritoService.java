@@ -2,6 +2,7 @@ package ms_carrito.service;
 
 import ms_carrito.dto.ItemCarritoDTO;
 import ms_carrito.exception.RecursoNoEncontradoException;
+import ms_carrito.exception.ReglaNegocioException;
 import ms_carrito.model.ItemCarrito;
 import ms_carrito.repository.ItemCarritoRepository;
 import org.slf4j.Logger;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -20,6 +22,9 @@ public class ItemCarritoService {
 
     @Autowired
     private ItemCarritoRepository carritoRepository;
+
+    @Autowired
+    private LibroClientService libroClientService;
 
     public List<ItemCarrito> listarTodos() {
         log.info("Listando todos los items del carrito");
@@ -44,11 +49,32 @@ public class ItemCarritoService {
     public ItemCarrito agregar(ItemCarritoDTO dto) {
         log.info("Agregando libro id: {} al carrito del usuario id: {}",
                 dto.getLibroId(), dto.getUsuarioId());
+
+        Double precioReal = libroClientService.obtenerPrecioLibro(dto.getLibroId());
+        if (precioReal == null) {
+            log.warn("Libro no encontrado en ms-libros id: {}", dto.getLibroId());
+            throw new ReglaNegocioException(
+                    "El libro no existe o ms-libros no esta disponible: " + dto.getLibroId());
+        }
+
+        Optional<ItemCarrito> existente = carritoRepository
+                .findByUsuarioIdAndLibroIdAndActivoTrue(dto.getUsuarioId(), dto.getLibroId());
+
+        if (existente.isPresent()) {
+            ItemCarrito item = existente.get();
+            int nuevaCantidad = item.getCantidad() + dto.getCantidad();
+            log.info("Item ya existe id: {}, sumando cantidad ({} + {} = {})",
+                    item.getId(), item.getCantidad(), dto.getCantidad(), nuevaCantidad);
+            item.setCantidad(nuevaCantidad);
+            item.setPrecioUnitario(precioReal);
+            return carritoRepository.save(item);
+        }
+
         ItemCarrito item = new ItemCarrito();
         item.setUsuarioId(dto.getUsuarioId());
         item.setLibroId(dto.getLibroId());
         item.setCantidad(dto.getCantidad());
-        item.setPrecioUnitario(dto.getPrecioUnitario());
+        item.setPrecioUnitario(precioReal);
         ItemCarrito guardado = carritoRepository.save(item);
         log.info("Item agregado al carrito con id: {}", guardado.getId());
         return guardado;
@@ -57,8 +83,16 @@ public class ItemCarritoService {
     public ItemCarrito actualizar(Long id, ItemCarritoDTO dto) {
         log.info("Actualizando item carrito con id: {}", id);
         ItemCarrito item = buscarPorId(id);
+
+        Double precioReal = libroClientService.obtenerPrecioLibro(item.getLibroId());
+        if (precioReal == null) {
+            log.warn("Libro no encontrado en ms-libros id: {}", item.getLibroId());
+            throw new ReglaNegocioException(
+                    "El libro no existe o ms-libros no esta disponible: " + item.getLibroId());
+        }
+
         item.setCantidad(dto.getCantidad());
-        item.setPrecioUnitario(dto.getPrecioUnitario());
+        item.setPrecioUnitario(precioReal);
         return carritoRepository.save(item);
     }
 

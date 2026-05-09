@@ -20,7 +20,5 @@ public class ItemCarritoDTO {
     @Min(value = 1, message = "La cantidad debe ser al menos 1")
     private Integer cantidad;
 
-    @NotNull(message = "El precio unitario es obligatorio")
-    @Positive(message = "El precio debe ser mayor a 0")
     private Double precioUnitario;
 }
