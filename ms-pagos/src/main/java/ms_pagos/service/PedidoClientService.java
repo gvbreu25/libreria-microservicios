@@ -3,8 +3,12 @@ package ms_pagos.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+import java.time.Duration;
 import java.util.Map;
 
 @Service
@@ -19,11 +23,16 @@ public class PedidoClientService {
     public boolean verificarPedido(Long pedidoId) {
         try {
             log.info("Verificando pedido id: {}", pedidoId);
-            Map respuesta = webClientBuilder.build()
+            Map<String, Object> respuesta = webClientBuilder.build()
                     .get()
                     .uri("http://ms-pedidos/api/v1/pedidos/" + pedidoId)
                     .retrieve()
-                    .bodyToMono(Map.class)
+                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                    .timeout(Duration.ofSeconds(5))
+                    .onErrorResume(ex -> {
+                        log.error("Fallo consulta pedido: {}", ex.getMessage());
+                        return Mono.empty();
+                    })
                     .block();
 
             if (respuesta != null) {

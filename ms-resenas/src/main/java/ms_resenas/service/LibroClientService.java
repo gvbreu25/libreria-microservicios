@@ -1,4 +1,4 @@
-package ms_pedidos.service;
+package ms_resenas.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,38 +12,33 @@ import java.time.Duration;
 import java.util.Map;
 
 @Service
-public class InventarioClientService {
+public class LibroClientService {
 
     private static final Logger log =
-            LoggerFactory.getLogger(InventarioClientService.class);
+            LoggerFactory.getLogger(LibroClientService.class);
 
     @Autowired
     private WebClient.Builder webClientBuilder;
 
-    public boolean verificarStock(Long libroId, Integer cantidadRequerida) {
+    public boolean verificarLibroExiste(Long libroId) {
         try {
-            log.info("Consultando stock del libro id: {}", libroId);
+            log.info("Verificando existencia del libro id: {}", libroId);
             Map<String, Object> respuesta = webClientBuilder.build()
                     .get()
-                    .uri("http://ms-inventario/api/v1/inventario/libro/" + libroId)
+                    .uri("http://ms-libros/api/v1/libros/" + libroId)
                     .retrieve()
                     .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
                     .timeout(Duration.ofSeconds(5))
                     .onErrorResume(ex -> {
-                        log.error("Fallo consulta inventario: {}", ex.getMessage());
+                        log.error("Fallo consulta libro: {}", ex.getMessage());
                         return Mono.empty();
                     })
                     .block();
-
-            if (respuesta == null) {
-                log.warn("Respuesta vacia desde ms-inventario para libro id: {}", libroId);
-                return false;
-            }
-            Integer cantidad = (Integer) respuesta.get("cantidad");
-            log.info("Stock disponible: {}", cantidad);
-            return cantidad != null && cantidad >= cantidadRequerida;
+            boolean existe = respuesta != null;
+            log.info("Libro id {} existe: {}", libroId, existe);
+            return existe;
         } catch (Exception e) {
-            log.error("Error al consultar inventario: {}", e.getMessage());
+            log.error("Error al verificar libro id {}: {}", libroId, e.getMessage());
             return false;
         }
     }
