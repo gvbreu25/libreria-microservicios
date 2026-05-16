@@ -43,7 +43,7 @@ public class Pedido {
             mappedBy = "pedido",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
-            fetch = FetchType.LAZY
+            fetch = FetchType.EAGER
     )
     @JsonManagedReference
     private List<DetallePedido> detalles = new ArrayList<>();
