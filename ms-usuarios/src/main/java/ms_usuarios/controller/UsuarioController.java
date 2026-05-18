@@ -2,7 +2,7 @@ package ms_usuarios.controller;
 
 import jakarta.validation.Valid;
 import ms_usuarios.dto.UsuarioDTO;
-import ms_usuarios.model.Usuario;
+import ms_usuarios.dto.UsuarioResponseDTO;
 import ms_usuarios.service.UsuarioService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +23,9 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     @GetMapping
-    public ResponseEntity<List<Usuario>> listar() {
+    public ResponseEntity<List<UsuarioResponseDTO>> listar() {
         log.info("GET /api/v1/usuarios");
-        List<Usuario> usuarios = usuarioService.listarTodos();
+        List<UsuarioResponseDTO> usuarios = usuarioService.listarTodos();
         if (usuarios.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
@@ -33,13 +33,13 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Usuario> buscar(@PathVariable Long id) {
+    public ResponseEntity<UsuarioResponseDTO> buscar(@PathVariable Long id) {
         log.info("GET /api/v1/usuarios/{}", id);
         return ResponseEntity.ok(usuarioService.buscarPorId(id));
     }
 
     @PostMapping
-    public ResponseEntity<Usuario> crear(
+    public ResponseEntity<UsuarioResponseDTO> crear(
             @Valid @RequestBody UsuarioDTO dto) {
         log.info("POST /api/v1/usuarios");
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -47,7 +47,7 @@ public class UsuarioController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Usuario> actualizar(
+    public ResponseEntity<UsuarioResponseDTO> actualizar(
             @PathVariable Long id,
             @Valid @RequestBody UsuarioDTO dto) {
         log.info("PUT /api/v1/usuarios/{}", id);

@@ -1,6 +1,7 @@
 package ms_usuarios.service;
 
 import ms_usuarios.dto.UsuarioDTO;
+import ms_usuarios.dto.UsuarioResponseDTO;
 import ms_usuarios.exception.RecursoNoEncontradoException;
 import ms_usuarios.exception.ReglaNegocioException;
 import ms_usuarios.model.Usuario;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -26,22 +28,25 @@ public class UsuarioService {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
-    public List<Usuario> listarTodos() {
+    public List<UsuarioResponseDTO> listarTodos() {
         log.info("Listando todos los usuarios");
-        return usuarioRepository.findAll();
+        return usuarioRepository.findAll().stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Usuario buscarPorId(Long id) {
+    public UsuarioResponseDTO buscarPorId(Long id) {
         log.info("Buscando usuario con id: {}", id);
-        return usuarioRepository.findById(id)
+        Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Usuario no encontrado con id: {}", id);
                     return new RecursoNoEncontradoException(
                             "Usuario no encontrado con id: " + id);
                 });
+        return toResponseDTO(usuario);
     }
 
-    public Usuario crear(UsuarioDTO dto) {
+    public UsuarioResponseDTO crear(UsuarioDTO dto) {
         log.info("Creando usuario con email: {}", dto.getEmail());
         if (usuarioRepository.existsByEmail(dto.getEmail())) {
             log.warn("Email ya registrado: {}", dto.getEmail());
@@ -56,17 +61,20 @@ public class UsuarioService {
         usuario.setRol(dto.getRol());
         Usuario guardado = usuarioRepository.save(usuario);
         log.info("Usuario creado con id: {}", guardado.getId());
-        return guardado;
+        return toResponseDTO(guardado);
     }
 
-    public Usuario actualizar(Long id, UsuarioDTO dto) {
+    public UsuarioResponseDTO actualizar(Long id, UsuarioDTO dto) {
         log.info("Actualizando usuario con id: {}", id);
-        Usuario usuario = buscarPorId(id);
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Usuario no encontrado con id: " + id));
         usuario.setNombre(dto.getNombre());
         usuario.setApellido(dto.getApellido());
         usuario.setEmail(dto.getEmail());
         usuario.setRol(dto.getRol());
-        return usuarioRepository.save(usuario);
+        Usuario actualizado = usuarioRepository.save(usuario);
+        return toResponseDTO(actualizado);
     }
 
     public void eliminar(Long id) {
@@ -77,5 +85,17 @@ public class UsuarioService {
         }
         usuarioRepository.deleteById(id);
         log.info("Usuario eliminado con id: {}", id);
+    }
+
+    private UsuarioResponseDTO toResponseDTO(Usuario u) {
+        return new UsuarioResponseDTO(
+                u.getId(),
+                u.getNombre(),
+                u.getApellido(),
+                u.getEmail(),
+                u.getRol(),
+                u.getActivo(),
+                u.getFechaCreacion()
+        );
     }
 }
